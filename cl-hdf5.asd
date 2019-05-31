@@ -6,4 +6,6 @@
   :depends-on (:hdf5-cffi)
   :pathname "src/"
   :components ((:file "package")
-               (:file "hdf5f" :depends-on ("package"))))
+               (:file "utils")
+               (:file "hdf5f" :depends-on ("package"
+                                           "utils"))))

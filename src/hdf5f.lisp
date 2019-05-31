@@ -58,10 +58,5 @@ Returns an hid_t that represents the created file."
       (error "File ~a is not an HDF5 file" file-name))
     (h5fopen full-name flags access-property-list)))
 
-(defun close-hdf5-file (file-id)
-  "FILE-ID is a hid_t that designates the file to close"
-  (unless (< 0 (h5iis-valid file-id))
-    (error "Invalid File ID"))
-  (unless (eq (h5iget-type file-id) :h5i-file)
-    (error "File ID is not a file handle"))
-  (h5fclose file-id))
+(wrap-close-function (h5fclose file-id) :h5i-file close-hdf5-file)
+

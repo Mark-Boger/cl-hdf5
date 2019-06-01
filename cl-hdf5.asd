@@ -4,7 +4,8 @@
   :version "0.0.0"
   :licence "MIT"
   :depends-on (:hdf5-cffi
-               :cffi)
+               :cffi
+               :alexandria)
   :pathname "src/"
   :components ((:file "package")
                (:file "utils" :depends-on ("package"))

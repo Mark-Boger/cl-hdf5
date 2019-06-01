@@ -6,14 +6,17 @@
 (defvar +unlimited+ +h5s-unlimited+)
 
 (defgeneric create-dataspace (dataspace-type &key)
-  (:documentation "Create a dataspace of type DATASPACE-TYPE"))
+  (:documentation
+   "Create a dataspace of type DATASPACE-TYPE.
+Where DATASPACE-TYPE is one of :null :scalar or :simple."))
 
-(defmethod create-dataspace ((dataspace (eql :null)) &key)
-  (declare (ignore dataspace))
+;; I feel like this is wrong
+(defmethod create-dataspace ((dataspace (eql :null)) &key dims maxdims)
+  (declare (ignore dataspace dims maxdims))
   (h5screate :h5s-null))
 
-(defmethod create-dataspace ((dataspace (eql :scaler)) &key)
-  (declare (ignore dataspace))
+(defmethod create-dataspace ((dataspace (eql :scalar)) &key dims maxdims)
+  (declare (ignore dataspace dims maxdims))
   (h5screate :h5s-scalar))
 
 (defmethod create-dataspace ((dataspace (eql :simple)) &key dims maxdims)
@@ -43,7 +46,7 @@
         (setf maxdims (mapcar #'process-symbols maxdims))
         (unless (every #'is-valid-dim  maxdims)
           (error "Every element in MAXDIMS must be either a positive integer or +UNLIMITED+"))
-        (unless (every (lambda (dim maxdim) (<= dim maxdim)) dims maxdims)
+        (unless (every #'<= dims maxdims)
           (error "All DIMS must be <= all MAXDIMS")))
       ;; Actually make the dataspace
       (let* ((dims-ptr (alloc rank dims))
@@ -59,3 +62,11 @@
         space))))
 
 (wrap-close-function (h5sclose space-id) :h5i-dataspace)
+
+(defmacro with-dataspace ((space-name type &key (dims '(1)) maxdims) &body body)
+  (multiple-value-bind (forms decls) (alexandria:parse-body body)
+    `(let ((,space-name (create-dataspace ,type :dims ,dims :maxdims ,maxdims)))
+       ,@decls
+       (unwind-protect
+            (progn ,@forms)
+         (close-dataspace ,space-name)))))

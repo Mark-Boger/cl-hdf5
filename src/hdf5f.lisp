@@ -32,24 +32,31 @@ Returns an hid_t that represents the created file."
         (access-property-list +h5p-default+))
     (h5fcreate full-name flags creation-property-list access-property-list)))
 
-(defun open-hdf5-file (file-name &key (if-does-not-exist :error)
+(defun open-hdf5-file (file-name &key
+                                   (if-does-not-exist :error)
+                                   (if-exists :error)
                                    (direction :input-output)
                                    (file-creation-property-list :default)
                                    (file-access-property-list :default))
   (check-arg (member if-does-not-exist '(:error :create)))
+  ;; The error option doesn't really make sense so it doesn't do anything
+  ;; it's just so that we have parity with the create options
+  (check-arg (member if-exists '(:error :supersede)))
   (check-arg (member direction '(:input :input-output)))
   (check-arg (eq file-creation-property-list :default))
   (check-arg (eq file-access-property-list :default))
   (let ((full-name (namestring (pathname file-name)))
         (create-file (eq if-does-not-exist :create))
         (file-exists (uiop:file-exists-p file-name))
+        (trun-file (eq if-exists :supersede))
         (flags (if (eq direction :input-output)
                    +h5f-acc-rdwr+
                    +h5f-acc-rdonly+))
         (access-property-list +h5p-default+))
-    (when (and create-file (not file-exists))
+    (when (or (and create-file (not file-exists)) trun-file)
       (return-from open-hdf5-file
         (create-hdf5-file file-name
+                          :if-exists if-exists
                           :file-creation-property-list file-creation-property-list
                           :file-access-property-list file-access-property-list)))
     (unless file-exists
@@ -60,3 +67,10 @@ Returns an hid_t that represents the created file."
 
 (wrap-close-function (h5fclose file-id) :h5i-file close-hdf5-file)
 
+(defmacro with-open-hdf5-file ((file-id file-name &rest options) &body body)
+  (multiple-value-bind (forms decls) (alexandria:parse-body body)
+    `(let ((,file-id (open-hdf5-file ,file-name ,@options)))
+       ,@decls
+       (unwind-protect
+            (progn ,@forms)
+         (close-hdf5-file ,file-id)))))

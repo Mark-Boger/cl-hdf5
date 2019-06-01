@@ -8,7 +8,7 @@
             (if (listp error)
                 `(error ,@error)
                 `(error ,error))
-            `(error (format nil "Unrecognized ~a option: ~a" name "~a") ,name)))))
+            `(error ,(format nil "Unrecognized ~a option: ~a" name "~a") ,name)))))
 
 (defmacro wrap-close-function (close-function type &optional func-name)
   (let* ((identifier (second close-function))

@@ -22,23 +22,21 @@
 
 (wrap-close-function (h5dclose dataset-id) :h5i-dataset)
 
-(defmacro with-dataset ((dset dataset-name file-id) &body body)
+(defmacro with-dataset ((dset dataset-name file-id &key magic) &body body)
   ;; Honestly this is probably a bad idea but it's fun so I'm doing it anyway
-  (let ((modi-body (mapcar (lambda (form)
-                             (let ((func (first form))
-                                   (form-length (list-length form)))
-                               ;; Should be refactored
-                               (cond ((and (eq func 'write-to-dataset)
-                                           (not (> form-length 2)))
-                                      `(,func ,dset ,@(rest form)))
-                                     ((and (eq func 'read-from-dataset)
-                                           (not (> form-length 1)))
-                                      `(,func ,dset ,@(rest form)))
-                                     (t form))))
-                           body)))
-    (multiple-value-bind (forms decl) (alexandria:parse-body modi-body)
-      `(let ((,dset (create-dataset ,file-id ,dataset-name)))
-         ,@decl
-         (unwind-protect
-              (progn ,@forms)
-           (close-dataset ,dset))))))
+  (labels ((check-form (form func)
+             (and (eq (first form) func) (not (symbolp (second form)))))
+           (tree-replace (form)
+             (cond
+               ((atom form) (return-from tree-replace form))
+               ((check-form form 'write-to-dataset)
+                (return-from tree-replace `(write-to-dataset ,dset ,@(rest form)))))
+             (loop :for element :in form
+                   :collect (tree-replace element))))
+    (let ((modi-body (if magic (tree-replace body) body)))
+      (multiple-value-bind (forms decl) (alexandria:parse-body modi-body)
+        `(let ((,dset (create-dataset ,file-id ,dataset-name)))
+           ,@decl
+           (unwind-protect
+                (progn ,@forms)
+             (close-dataset ,dset)))))))

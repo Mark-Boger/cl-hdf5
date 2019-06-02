@@ -11,12 +11,12 @@
 Where DATASPACE-TYPE is one of :null :scalar or :simple."))
 
 ;; I feel like this is wrong
-(defmethod create-dataspace ((dataspace (eql :null)) &key dims maxdims)
-  (declare (ignore dataspace dims maxdims))
+(defmethod create-dataspace ((dataspace (eql :null)) &key &allow-other-keys)
+  (declare (ignore dataspace))
   (h5screate :h5s-null))
 
-(defmethod create-dataspace ((dataspace (eql :scalar)) &key dims maxdims)
-  (declare (ignore dataspace dims maxdims))
+(defmethod create-dataspace ((dataspace (eql :scalar)) &key &allow-other-keys)
+  (declare (ignore dataspace))
   (h5screate :h5s-scalar))
 
 (defmethod create-dataspace ((dataspace (eql :simple)) &key dims maxdims)

@@ -2,16 +2,24 @@
 
 (in-package :cl-hdf5)
 
-(defvar +hdf5-types+ (list
-                      +h5t-c-s1+))
-
-(defun create-dataset (file-id dataset-name &key (type :scalar) dims maxdims)
-  (with-dataspace (space type :dims dims :maxdims maxdims)
-    (let ((dset (h5dcreate2 file-id dataset-name +h5t-std-i32be+ space
-                            +h5p-default+ +h5p-default+ +h5p-default+)))
-      (unless (< 0 dset)
-        (error "Error creating dataset"))
-      dset)))
+(defun create-dataset (file-id dataset-name &key (type :scalar)
+                                              dims maxdims
+                                              (datatype-id :std-i32be)
+                                              (link-creation-property-list :default)
+                                              (dataset-creation-property-list :default)
+                                              (dataset-access-property-list :default))
+  (declare (ignore link-creation-property-list dataset-access-property-list
+                   dataset-creation-property-list))
+  (check-arg (member type '(:scalar :null :simple)))
+  (let ((dtype (getf +hdf5-types+ datatype-id)))
+    (unless dtype
+      (error "Unrecognized datatype: ~a" datatype-id))
+    (with-dataspace (space type :dims dims :maxdims maxdims)
+      (let ((dset (h5dcreate2 file-id dataset-name dtype
+                              space +h5p-default+ +h5p-default+ +h5p-default+)))
+        (unless (< 0 dset)
+          (error "Error creating dataset"))
+        dset))))
 
 (defun write-to-dataset (dataset-id object)
   (cffi:with-foreign-object (data :int 1)

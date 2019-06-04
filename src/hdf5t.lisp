@@ -6,29 +6,29 @@
                        :ieee-f32le ,+h5t-ieee-f32le+
                        :ieee-f64be ,+h5t-ieee-f64be+
                        :ieee-f64le ,+h5t-ieee-f64le+
-                       :native-b8 ,+h5t-native-b8+
-                       :native-b16 ,+h5t-native-b16+
-                       :native-b32 ,+h5t-native-b32+
-                       :native-b64 ,+h5t-native-b64+
-                       :native-char ,+h5t-native-char+
-                       :native-float ,+h5t-native-float+
-                       :native-double ,+h5t-native-float+
-                       :native-haddr ,+h5t-native-haddr+
-                       :native-hbool ,+h5t-native-hbool+
-                       :native-herr ,+h5t-native-herr+
-                       :native-hsize ,+h5t-native-hsize+
-                       :native-hssize ,+h5t-native-hssize+
-                       :native-int ,+h5t-native-int+
-                       :native-llong ,+h5t-native-llong+
-                       :native-long ,+h5t-native-long+
-                       :native-opaque ,+h5t-native-opaque+
-                       :native-schar ,+h5t-native-schar+
-                       :native-short ,+h5t-native-short+
-                       :native-uchar ,+h5t-native-uchar+
-                       :native-uint ,+h5t-native-uint+
-                       :native-ulong ,+h5t-native-ulong+
-                       :native-ullong ,+h5t-native-ullong+
-                       :native-ushort ,+h5t-native-ushort+
+                       :b8 ,+h5t-native-b8+
+                       :b16 ,+h5t-native-b16+
+                       :b32 ,+h5t-native-b32+
+                       :b64 ,+h5t-native-b64+
+                       :char ,+h5t-native-char+
+                       :float ,+h5t-native-float+
+                       :double ,+h5t-native-float+
+                       :haddr ,+h5t-native-haddr+
+                       :hbool ,+h5t-native-hbool+
+                       :herr ,+h5t-native-herr+
+                       :hsize ,+h5t-native-hsize+
+                       :hssize ,+h5t-native-hssize+
+                       :int ,+h5t-native-int+
+                       :llong ,+h5t-native-llong+
+                       :long ,+h5t-native-long+
+                       :opaque ,+h5t-native-opaque+
+                       :schar ,+h5t-native-schar+
+                       :short ,+h5t-native-short+
+                       :uchar ,+h5t-native-uchar+
+                       :uint ,+h5t-native-uint+
+                       :ulong ,+h5t-native-ulong+
+                       :ullong ,+h5t-native-ullong+
+                       :ushort ,+h5t-native-ushort+
                        :ncset ,+h5t-ncset+
                        :nstr ,+h5t-nstr+
                        :opaque-tag-max ,+h5t-opaque-tag-max+

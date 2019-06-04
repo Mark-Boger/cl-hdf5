@@ -2,6 +2,44 @@
 
 (in-package :cl-hdf5)
 
+(defclass dataspace (hdf5)
+  ())
+
+(defclass null-dataspace (dataspace)
+  ())
+
+(defclass scalar-dataspace (dataspace)
+  ())
+
+(defclass simple-dataspace (dataspace)
+  ((%dims :initarg :dims
+          :reader dims)
+   (%maxdims :initarg :max-dims
+             :reader max-dims)))
+
+(defmethod describe-object ((dataspace dataspace) stream)
+  (format stream "~a is a~:[ closed~;n open~] dataspace" dataspace
+          (is-open dataspace)))
+
+(defmethod describe-object :after ((dataspace simple-dataspace) stream)
+  (let ((max-dims (max-dims dataspace)))
+    (when (is-open dataspace)
+      (setf max-dims (mapcar (lambda (dim)
+                               (when (= dim +unlimited+)
+                                 '+unlimited+))
+                             max-dims))
+      (format stream "~&  it has dimensions of ~a~:[~;~&  and maximum dimensions ~:*~a ~]"
+              (dims dataspace) max-dims))))
+
+(defun make-null-dataspace (dataspace-id)
+  (make-instance 'null-dataspace :id dataspace-id))
+
+(defun make-scalar-dataspace (dataspace-id)
+  (make-instance 'scalar-dataspace :id dataspace-id))
+
+(defun make-simple-dataspace (dataspace-id dims max-dims)
+  (make-instance 'simple-dataspace :id dataspace-id :dims dims :max-dims max-dims))
+
 ;; Alias this so we don't have the h5s prefix
 (defvar +unlimited+ +h5s-unlimited+)
 
@@ -13,11 +51,11 @@ Where DATASPACE-TYPE is one of :null :scalar or :simple."))
 ;; I feel like this is wrong
 (defmethod create-dataspace ((dataspace (eql :null)) &key &allow-other-keys)
   (declare (ignore dataspace))
-  (h5screate :h5s-null))
+  (make-null-dataspace (create-or-die (h5screate :h5s-null) dataspace-creation-error)))
 
 (defmethod create-dataspace ((dataspace (eql :scalar)) &key &allow-other-keys)
   (declare (ignore dataspace))
-  (h5screate :h5s-scalar))
+  (make-scalar-dataspace (create-or-die (h5screate :h5s-scalar) dataspace-creation-error)))
 
 (defmethod create-dataspace ((dataspace (eql :simple)) &key dims maxdims)
   (declare (ignore dataspace))
@@ -53,13 +91,12 @@ Where DATASPACE-TYPE is one of :null :scalar or :simple."))
              (max-ptr (if maxdims
                           (alloc rank maxdims)
                           +null+))
-             (space (h5screate-simple rank dims-ptr max-ptr)))
+             (space (create-or-die (h5screate-simple rank dims-ptr max-ptr)
+                                   dataspace-creation-error)))
         (cffi:foreign-free dims-ptr)
         (when maxdims (cffi:foreign-free max-ptr))
         ;; Check to see if we actually made the dataspace
-        (when (< space 0)
-          (error "Error creating dataspace"))
-        space))))
+        (make-simple-dataspace space dims maxdims)))))
 
 (wrap-close-function (h5sclose space-id) :h5i-dataspace)
 

@@ -20,7 +20,8 @@
 
 (defmacro define-close ((object) &body body)
   (let ((result (gensym "close-result")))
-    `(defmethod hdf5-close (,object)
+    `(defmethod close (,object &key abort)
+       (declare (ignore abort))
        (let ((,result (progn ,@body)))
          (if (<= 0 ,result)
              t
@@ -34,8 +35,8 @@
     (error 'hdf5-invalid-id :instance instance)))
 
 (defun maybe-propeties (symbol)
-  (unless (typep symbol 'properties)
-    (error 'type-error :expected-type 'properties
+  (unless (typep symbol 'property-list)
+    (error 'type-error :expected-type 'property-list
                        :datum symbol))
   (let ((id (id symbol)))
     (if (eql id :default)

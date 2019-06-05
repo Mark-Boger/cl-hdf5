@@ -5,14 +5,17 @@
 
 (define-condition hdf5-error (error)
   ((%reason :initarg :reason
-            :reader reason))
+            :reader reason
+            :initform nil))
   (:report simple-hdf5-reporter))
 
 (define-condition hdf5-invalid-id (hdf5-error)
   ((%hdf5-instance :initarg :instance
                    :reader instance))
   (:report (lambda (condition stream)
-             (format stream "~a does not have a valid HDF5 id." (instance condition)))))
+             (if (reason condition)
+                 (format stream (reason condition))
+                 (format stream "~a does not have a valid HDF5 id." (instance condition))))))
 
 (define-condition hdf5-close-error (hdf5-error)
   ())

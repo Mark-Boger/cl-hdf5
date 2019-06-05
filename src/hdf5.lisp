@@ -20,7 +20,6 @@
       ;; we need to close the ID so we don't have a leak.
       ;; But since the type doesn't match the object we don't actually know
       ;; what it is. So fall back to hdf5 itself to figure it out and close.
-      (print (h5iget-type id))
       (case (h5iget-type id)
         (:h5i-file (h5fclose id))
         (:h5i-dataset (h5dclose id))
@@ -28,15 +27,15 @@
         (:h5i-datatype (h5tclose id))
         (:h5i-attr (h5aclose id))
         (:h5i-group (h5gclose id)))
-      (error 'hdf5-invalid-id))))
+      (error 'hdf5-invalid-id :reason (format nil "~a cannot have a ~a identifier."
+                                              instance
+                                              (h5iget-type id))))))
 
-(defgeneric hdf5-close (instance)
-  (:documentation "Closes a given hdf5 object after checking that the instances ID is a
-valid HDF5 ID."))
-
-(defmethod hdf5-close :before ((instance hdf5))
+(defmethod close :before ((instance hdf5) &key abort)
+  (declare (ignore abort))
   (unless (< 0 (h5iis-valid (id instance)))
-    (error 'hdf5-invalid-id)))
+    (error 'hdf5-invalid-id :instance instance)))
 
-(defmethod hdf5-close :after ((instance hdf5))
+(defmethod close :after ((instance hdf5) &key abort)
+  (declare (ignore abort))
   (set-open nil instance))

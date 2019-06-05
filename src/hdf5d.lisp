@@ -72,7 +72,7 @@
          (objects (if (vectorp object)
                       object
                       (vector object)))
-         (total-space (reduce #'* (dims dspace))))
+         (total-space (total-space dspace)))
     (unless (= (length objects) total-space)
       (error 'dataspace-size-mismatch :expected-size total-space
                                       :actual-size (length objects)))
@@ -92,7 +92,7 @@
   (let* ((dspace (dataspace dataset))
          (dtype (data-type dataset))
          (cffi-type (cffi-type dtype))
-         (total-space (reduce #'* (dims dspace))))
+         (total-space (total-space dspace)))
     (cffi:with-foreign-object (buf cffi-type total-space)
       (when (< (h5dread (id dataset) (id dtype) +h5s-all+ +h5s-all+ +h5p-default+ buf) 0)
         (error 'dataset-error :reason "Unable to read from dataset"))

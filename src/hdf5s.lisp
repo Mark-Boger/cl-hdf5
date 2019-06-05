@@ -10,21 +10,26 @@
 (defclass null-dataspace (dataspace)
   ())
 
-(defclass scalar-dataspace (dataspace)
-  ((%rank :initform 1
-          :reader rank
-          :allocation :class)
-   (%dims :initform '(1)
-          :reader dims
-          :allocation :class)))
-
-(defclass simple-dataspace (dataspace)
-  ((%rank :initarg :rank
-          :reader rank)
+(defclass ranked-dataspace (dataspace)
+  ((%rank :reader rank)
    (%dims :initarg :dims
+          :initform '(1)
           :reader dims)
-   (%maxdims :initarg :max-dims
+   (%space :reader total-space)))
+
+(defclass scalar-dataspace (ranked-dataspace)
+  ())
+
+(defclass simple-dataspace (ranked-dataspace)
+  ((%maxdims :initarg :max-dims
              :reader max-dims)))
+
+(defmethod initialize-instance :after ((instance ranked-dataspace) &rest initargs &key)
+  (declare (ignore initargs))
+  (let ((dims (dims instance)))
+    (with-slots ((space %space) (rank %rank)) instance
+      (setf space (reduce #'* dims))
+      (setf rank (length dims)))))
 
 (defmethod describe-object ((dataspace dataspace) stream)
   (format stream "~a is a~:[ closed~;n open~] dataspace" dataspace
@@ -49,7 +54,6 @@
 (defun make-simple-dataspace (dataspace-id dims max-dims)
   (make-instance 'simple-dataspace :id dataspace-id
                                    :dims dims
-                                   :rank (list-length dims)
                                    :max-dims max-dims))
 
 ;; Alias this so we don't have the h5s prefix

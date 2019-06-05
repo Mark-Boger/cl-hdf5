@@ -3,12 +3,13 @@
 (defmacro with-hdf5 ((&rest specifications) &body body)
   (labels ((gen-open (specs)
              (loop :for spec :in specs
-                   :collect `(setf ,(second spec) (,(let ((type (first spec)))
-                                                      (ecase type 
-                                                        (:file 'open-hdf5-file)
-                                                        (:dataset 'open-dataset)
-                                                        (:dataspace 'create-dataspace)))
-                                                   ,@(cddr spec)))))
+                   :when (not (null (cddr spec)))
+                     :collect `(setf ,(second spec) (,(let ((type (first spec)))
+                                                        (ecase type 
+                                                          (:file 'open-hdf5-file)
+                                                          (:dataset 'open-dataset)
+                                                          (:dataspace 'create-dataspace)))
+                                                     ,@(cddr spec)))))
            (gen-close (specs)
              (loop :for spec :in specs
                    :collect `(when ,(second spec) (hdf5-close ,(second spec))))))

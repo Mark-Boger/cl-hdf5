@@ -12,10 +12,15 @@
                (:file "conditions" :depends-on ("package"))
                (:file "hdf5" :depends-on ("utils"
                                           "conditions"))
-               (:file "hdf5f" :depends-on ("hdf5"))
-               (:file "hdf5s" :depends-on ("hdf5"))
-               (:file "hdf5d" :depends-on ("hdf5"))
-               (:file "hdf5t" :depends-on ("hdf5"))
+               (:file "hdf5p" :depends-on ("hdf5"))
+               (:file "hdf5f" :depends-on ("hdf5"
+                                           "hdf5p"))
+               (:file "hdf5s" :depends-on ("hdf5"
+                                           "hdf5p"))
+               (:file "hdf5d" :depends-on ("hdf5"
+                                           "hdf5p"))
+               (:file "hdf5t" :depends-on ("hdf5"
+                                           "hdf5p"))
                (:file "macros" :depends-on ("hdf5f"
                                             "hdf5s"
                                             "hdf5d"

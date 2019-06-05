@@ -1,16 +1,23 @@
 (in-package :cl-hdf5)
 
-(defclass hdf5-file (hdf5)
-  ((%filepath :initarg :filepath
-              :reader filepath)))
+(defclass hdf5-file (hdf5-sentinel hdf5)
+  ((%filename :initarg :filename
+              :reader filename)
+   (%filepath :initarg :filepath
+              :reader filepath)
+   (%hdf5-type :initform :h5i-file
+               :reader hdf5-type
+               :allocation :class)))
 
 (defmethod describe-object ((file hdf5-file) stream)
-  (format stream "~a is an ~:[closed~;open~] HDF5 file"
-          (filepath file)
-          (is-open file)))
+  (format stream "~a is a~:[ closed~;n open~] HDF5 file at 
+  ~a"
+          file
+          (is-open file)
+          (truename (filepath file))))
 
 (defun make-hdf5-file (fd filepath)
-  (make-instance 'hdf5-file :fd fd :filepath filepath))
+  (make-instance 'hdf5-file :id fd :filename (pathname-name filepath) :filepath filepath))
 
 ;; This isn't technically in the hdf5f part of the API but _I_ think
 ;; it makes more sense here.
@@ -23,8 +30,8 @@
       (t (error "File error")))))
 
 (defun create-hdf5-file (file-name &key (if-exists :error)
-                                     (file-creation-property-list :default)
-                                     (file-access-property-list :default))
+                                     (file-creation-property-list +default-properties+)
+                                     (file-access-property-list +default-properties+))
   "Create an HDF5 file with FILE-NAME.
 
 IF-EXITS may be either :error or :supersede. If IF-EXISTS is neither of those an error
@@ -40,17 +47,15 @@ Returns an hid_t that represents the created file."
                    +h5f-acc-excl+))
         (creation-property-list (maybe-propeties file-creation-property-list))
         (access-property-list (maybe-propeties file-access-property-list)))
-    (let ((file (h5fcreate full-name flags creation-property-list access-property-list)))
-      (unless (< 0 file)
-        (error 'hdf5-file-creation-error))
-      (make-hd))))
+    (make-hdf5-file (h5fcreate full-name flags creation-property-list access-property-list)
+                    full-name)))
 
 (defun open-hdf5-file (file-name &key
                                    (if-does-not-exist :error)
                                    (if-exists :error)
                                    (direction :input-output)
-                                   (file-creation-property-list :default)
-                                   (file-access-property-list :default))
+                                   (file-creation-property-list +default-properties+)
+                                   (file-access-property-list +default-properties+))
   (check-arg (member if-does-not-exist '(:error :create)))
   ;; The error option doesn't really make sense so it doesn't do anything
   ;; it's just so that we have parity with the create options
@@ -63,21 +68,22 @@ Returns an hid_t that represents the created file."
         (flags (if (eq direction :input-output)
                    +h5f-acc-rdwr+
                    +h5f-acc-rdonly+))
-        (access-property-list (maybe-propeties file-access-property-list))
-        (creation-property-list (maybe-propeties file-creation-property-list)))
+        (access-property-list (maybe-propeties file-access-property-list)))
     (when (or (and create-file (not file-exists)) trun-file)
       (return-from open-hdf5-file
         (create-hdf5-file file-name
                           :if-exists if-exists
-                          :file-creation-property-list creation-property-list
-                          :file-access-property-list access-property-list)))
+                          :file-creation-property-list file-creation-property-list
+                          :file-access-property-list file-access-property-list)))
     (unless file-exists
       (error "File ~a does not exist" file-name))
     (unless (is-hdf5-file file-name)
       (error "File ~a is not an HDF5 file" file-name))
-    (h5fopen full-name flags access-property-list)))
+    (make-hdf5-file (h5fopen full-name flags access-property-list) full-name)))
 
-(wrap-close-function (h5fclose file-id) :h5i-file close-hdf5-file)
+
+(define-close ((instance hdf5-file))
+  (h5fclose (id instance)))
 
 (defmacro with-open-hdf5-file ((file-id file-name &rest options) &body body)
   (multiple-value-bind (forms decls) (alexandria:parse-body body)
@@ -85,7 +91,7 @@ Returns an hid_t that represents the created file."
        ,@decls
        (unwind-protect
             (progn ,@forms)
-         (close-hdf5-file ,file-id)))))
+         (hdf5-close ,file-id)))))
 
 (defmacro with-open-hdf5-files ((&rest files) &body body)
   (multiple-value-bind (forms decls) (alexandria:parse-body body)
@@ -95,4 +101,4 @@ Returns an hid_t that represents the created file."
        (unwind-protect
             (progn ,@forms))
        (progn ,@(loop :for file :in files
-                      :collect `(close-hdf5-file ,(first file)))))))
+                      :collect `(hdf5-close ,(first file)))))))

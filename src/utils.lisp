@@ -18,29 +18,28 @@
          (error ',error))
        ,object)))
 
-(defmacro wrap-close-function (close-function type &optional func-name)
-  (let* ((ident (gensym "idetifier"))
-         (identifier (second close-function))
-         (full-type-name (string-downcase (symbol-name type)))
-         (actual-type (subseq full-type-name (1+ (position #\- full-type-name))))
-         (func (if func-name
-                   func-name
-                   (intern (string-upcase (format nil "close-~a" actual-type))))))
-    (setf (nth 1 close-function) ident)
-    `(defun ,func (,identifier)
-       (let ((,ident (id ,identifier)))
-         (unless (< 0 (h5iis-valid ,ident))
-           (error ,(format nil "Invalid HDF5 ~a identifier" actual-type)))
-         (unless (eq (h5iget-type ,ident) ,type)
-           (error ,(format nil "~a is not an HDF5 ~a" identifier actual-type)))
-         (if (<= 0 ,close-function)
-             (prog1 t
-               (set-open nil ,identifier))
-             (error ,(format nil "Error closing HDF5 ~a" actual-type)))))))
+(defmacro define-close ((object) &body body)
+  (let ((result (gensym "close-result")))
+    `(defmethod hdf5-close (,object)
+       (let ((,result (progn ,@body)))
+         (if (<= 0 ,result)
+             t
+             (error 'hdf5-close-error))))))
+
+(defun is-valid (instance)
+  (h5iis-valid (id instance)))
+
+(defun validate-or-die (instance)
+  (unless (is-valid instance)
+    (error 'hdf5-invalid-id :instance instance)))
 
 (defun maybe-propeties (symbol)
-  (if (eql symbol :default)
-      +h5p-default+
-      (if (h5iis-valid symbol)
-          symbol
-          (error 'invalid-hdf5-id))))
+  (unless (typep symbol 'properties)
+    (error 'type-error :expected-type 'properties
+                       :datum symbol))
+  (let ((id (id symbol)))
+    (if (eql id :default)
+        +h5p-default+
+        (if (h5iis-valid id)
+            id
+            (error 'hdf5-invalid-id :instance symbol)))))

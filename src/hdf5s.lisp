@@ -2,17 +2,26 @@
 
 (in-package :cl-hdf5)
 
-(defclass dataspace (hdf5)
-  ())
+(defclass dataspace (hdf5-sentinel hdf5)
+  ((%hdf5-type :initform :h5i-dataspace
+               :reader hdf5-type
+               :allocation :class)))
 
 (defclass null-dataspace (dataspace)
   ())
 
 (defclass scalar-dataspace (dataspace)
-  ())
+  ((%rank :initform 1
+          :reader rank
+          :allocation :class)
+   (%dims :initform '(1)
+          :reader dims
+          :allocation :class)))
 
 (defclass simple-dataspace (dataspace)
-  ((%dims :initarg :dims
+  ((%rank :initarg :rank
+          :reader rank)
+   (%dims :initarg :dims
           :reader dims)
    (%maxdims :initarg :max-dims
              :reader max-dims)))
@@ -38,7 +47,10 @@
   (make-instance 'scalar-dataspace :id dataspace-id))
 
 (defun make-simple-dataspace (dataspace-id dims max-dims)
-  (make-instance 'simple-dataspace :id dataspace-id :dims dims :max-dims max-dims))
+  (make-instance 'simple-dataspace :id dataspace-id
+                                   :dims dims
+                                   :rank (list-length dims)
+                                   :max-dims max-dims))
 
 ;; Alias this so we don't have the h5s prefix
 (defvar +unlimited+ +h5s-unlimited+)
@@ -98,7 +110,8 @@ Where DATASPACE-TYPE is one of :null :scalar or :simple."))
         ;; Check to see if we actually made the dataspace
         (make-simple-dataspace space dims maxdims)))))
 
-(wrap-close-function (h5sclose space-id) :h5i-dataspace)
+(define-close ((instance dataspace))
+  (h5sclose (id instance)))
 
 (defmacro with-dataspace ((space-name type &key (dims '(1)) maxdims) &body body)
   (multiple-value-bind (forms decls) (alexandria:parse-body body)
@@ -106,4 +119,4 @@ Where DATASPACE-TYPE is one of :null :scalar or :simple."))
        ,@decls
        (unwind-protect
             (progn ,@forms)
-         (close-dataspace ,space-name)))))
+         (hdf5-close ,space-name)))))

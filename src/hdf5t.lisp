@@ -1,66 +1,53 @@
 (in-package :cl-hdf5)
 
-(defvar +hdf5-types+ `(:c-s1 ,+h5t-c-s1+
-                       :fortran-s1 ,+h5t-fortran-s1+
-                       :ieee-f32be ,+h5t-ieee-f32be+
-                       :ieee-f32le ,+h5t-ieee-f32le+
-                       :ieee-f64be ,+h5t-ieee-f64be+
-                       :ieee-f64le ,+h5t-ieee-f64le+
-                       :b8 ,+h5t-native-b8+
-                       :b16 ,+h5t-native-b16+
-                       :b32 ,+h5t-native-b32+
-                       :b64 ,+h5t-native-b64+
-                       :char ,+h5t-native-char+
-                       :float ,+h5t-native-float+
-                       :double ,+h5t-native-float+
-                       :haddr ,+h5t-native-haddr+
-                       :hbool ,+h5t-native-hbool+
-                       :herr ,+h5t-native-herr+
-                       :hsize ,+h5t-native-hsize+
-                       :hssize ,+h5t-native-hssize+
-                       :int ,+h5t-native-int+
-                       :llong ,+h5t-native-llong+
-                       :long ,+h5t-native-long+
-                       :opaque ,+h5t-native-opaque+
-                       :schar ,+h5t-native-schar+
-                       :short ,+h5t-native-short+
-                       :uchar ,+h5t-native-uchar+
-                       :uint ,+h5t-native-uint+
-                       :ulong ,+h5t-native-ulong+
-                       :ullong ,+h5t-native-ullong+
-                       :ushort ,+h5t-native-ushort+
-                       :ncset ,+h5t-ncset+
-                       :nstr ,+h5t-nstr+
-                       :opaque-tag-max ,+h5t-opaque-tag-max+
-                       :std-b8be ,+h5t-std-b8be+
-                       :std-b8le ,+h5t-std-b8le+
-                       :std-b16be ,+h5t-std-b16be+
-                       :std-b16le ,+h5t-std-b16le+
-                       :std-b32be ,+h5t-std-b32be+
-                       :std-b32le ,+h5t-std-b32le+
-                       :std-b64be ,+h5t-std-b64be+
-                       :std-b64le ,+h5t-std-b64le+
-                       :std-i8be ,+h5t-std-i8be+
-                       :std-i8le ,+h5t-std-i8le+
-                       :std-i16be ,+h5t-std-i16be+
-                       :std-i16le ,+h5t-std-i16le+
-                       :std-i32be ,+h5t-std-i32be+
-                       :std-i32le ,+h5t-std-i32le+
-                       :std-i64be ,+h5t-std-i64be+
-                       :std-i64le ,+h5t-std-i64le+
-                       :std-ref-dsetreg ,+h5t-std-ref-dsetreg+
-                       :std-ref-obj ,+h5t-std-ref-obj+
-                       :std-u8be ,+h5t-std-u8be+
-                       :std-u8le ,+h5t-std-u8le+
-                       :std-u16be ,+h5t-std-u16be+
-                       :std-u16le ,+h5t-std-u16le+
-                       :std-u32be ,+h5t-std-u32be+
-                       :std-u32le ,+h5t-std-u32le+
-                       :std-u64be ,+h5t-std-u64be+
-                       :std-u64le ,+h5t-std-u64le+
-                       :unix-d32be ,+h5t-unix-d32be+
-                       :unix-d32le ,+h5t-unix-d32le+
-                       :unix-d64be ,+h5t-unix-d64be+
-                       :unix-d64le ,+h5t-unix-d64le+
-                       :variable ,+h5t-variable+))
+(defclass datatype (hdf5-sentinel hdf5)
+  ((%cffi-foreign-type :initarg :cffi-type
+                       :reader cffi-type)
+   (%name :initarg :name
+          :reader name)
+   (%hdf5-type :initform :h5i-datatype
+               :reader hdf5-type
+               :allocation :class)))
 
+(defun make-datatype (datatype-id cffi-type)
+  (make-instance 'datatype :id datatype-id :cffi-type cffi-type))
+
+(defmethod describe-object ((datatype datatype) stream)
+  (format stream "~&~a is a datatype with ~a as its cffi-type"
+          datatype
+          (cffi-type datatype)))
+
+;; TODO: Define opaque datatype
+
+;; According to the User's Guide you're able to have the two endpoints of a data
+;; transfer have different data types. For example if you have BE floats and LE
+;; floats you should be able to, transparently, transfer data back and forth (maybe).
+
+;; We only define our types for the native data types because according to the
+;; User's Guide 'native' types are predefined aliases for the architecture-specific
+;; memory layout.
+(defvar +hdf5-types+ `(:b8     ,(make-datatype +h5t-native-b8+     :uint8)
+                       :b16    ,(make-datatype +h5t-native-b16+    :uin16)
+                       :b32    ,(make-datatype +h5t-native-b32+    :uint32)
+                       :b64    ,(make-datatype +h5t-native-b64+    :uint64)
+                       :char   ,(make-datatype +h5t-native-char+   :char)
+                       :float  ,(make-datatype +h5t-native-float+  :float)
+                       :double ,(make-datatype +h5t-native-double+ :double)
+                       :haddr  ,(make-datatype +h5t-native-haddr+  :pointer)
+                       :hbool  ,(make-datatype +h5t-native-hbool+  :boolean)
+                       :herr   ,(make-datatype +h5t-native-herr+   :int)
+                       :hsize  ,(make-datatype +h5t-native-hsize+  :int)
+                       :hssize ,(make-datatype +h5t-native-hssize+ :int)
+                       :int    ,(make-datatype +h5t-native-int+    :int)
+                       :llong  ,(make-datatype +h5t-native-llong+  :llong)
+                       :long   ,(make-datatype +h5t-native-long+   :long)
+                       ;; NOTE: :void is used as a place holder, if this type
+                       ;; is used it will error out.
+                       :opaque ,(make-datatype +h5t-native-opaque+ :void)
+                       :schar  ,(make-datatype +h5t-native-schar+  :char)
+                       :short  ,(make-datatype +h5t-native-short+  :short)
+                       :uchar  ,(make-datatype +h5t-native-uchar+  :uchar)
+                       :uint   ,(make-datatype +h5t-native-uint+   :uint)
+                       :ulong  ,(make-datatype +h5t-native-ulong+  :ulong)
+                       :ullong ,(make-datatype +h5t-native-ullong+ :ullong)
+                       :ushort ,(make-datatype +h5t-native-ushort+ :ushort)))

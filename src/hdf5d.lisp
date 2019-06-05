@@ -30,7 +30,7 @@
 
 (defun create-dataset (file dataset-name &key (type :scalar)
                                            dims maxdims
-                                           (datatype-id :int)
+                                           (datatype :int)
                                            (link-creation-property-list +default-properties+)
                                            (dataset-creation-property-list
                                             +default-properties+)
@@ -39,17 +39,22 @@
   (validate-or-die file)
   (check-arg (member type '(:scalar :null :simple)))
   
-  (let ((dtype (or (getf +hdf5-types+ datatype-id) datatype-id))
+  (let ((dtype (or (getf +hdf5-types+ datatype) datatype))
         (link-creation-list (maybe-propeties link-creation-property-list))
         (dataset-creation-list (maybe-propeties dataset-creation-property-list))
         (dataset-access-list (maybe-propeties dataset-access-property-list)))
     (validate-or-die dtype)
     (with-dataspace (space type :dims dims :maxdims maxdims)
-      (make-dataset (create-or-die (h5dcreate2 (id file) dataset-name (id dtype) (id space)
-                                               link-creation-list dataset-creation-list
-                                               dataset-access-list)
-                                   dataset-creation-error)
-                    file dataset-name dtype space))))
+      (%create-dataset file dataset-name dtype space
+                       link-creation-list dataset-creation-list dataset-access-list))))
+
+(defun %create-dataset (file name dtype space link-creation-list dataset-creation-list
+                        dataset-access-list)
+  (make-dataset (create-or-die (h5dcreate2 (id file) name (id dtype) (id space)
+                                           link-creation-list dataset-creation-list
+                                           dataset-access-list)
+                               dataset-creation-error)
+                file name dtype space))
 
 (defun open-dataset (file dataset-name &rest options)
   (declare (ignore options))
@@ -136,11 +141,3 @@
          (progn
            ,@(loop :for dataset :in datasets
                    :collect `(hdf5-close ,(first dataset))))))))
-
-(defun stupid-dset-test (file)
-  (uiop:delete-file-if-exists file)
-  (with-hdf5 ((:file f "../test/something.h5" :if-does-not-exist :create)
-              (:dataset d f "something"))
-    (describe d)
-    (write-to-dataset d #(1 2 3 4 5 6 7 8 9))
-    (read-from-dataset d)))

@@ -53,7 +53,7 @@ Returns an hid_t that represents the created file."
 (defun open-hdf5-file (file-name &key
                                    (if-does-not-exist :error)
                                    (if-exists :error)
-                                   (direction :input-output)
+                                   (direction :input)
                                    (file-creation-property-list +default-properties+)
                                    (file-access-property-list +default-properties+))
   (check-arg (member if-does-not-exist '(:error :create)))

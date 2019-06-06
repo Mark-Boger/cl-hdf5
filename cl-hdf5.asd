@@ -12,16 +12,33 @@
                (:file "conditions" :depends-on ("package"))
                (:file "hdf5" :depends-on ("utils"
                                           "conditions"))
-               (:file "hdf5p" :depends-on ("hdf5"))
-               (:file "hdf5f" :depends-on ("hdf5"
-                                           "hdf5p"))
-               (:file "hdf5s" :depends-on ("hdf5"
-                                           "hdf5p"))
-               (:file "hdf5d" :depends-on ("hdf5"
-                                           "hdf5p"))
-               (:file "hdf5t" :depends-on ("hdf5"
-                                           "hdf5p"))
-               (:file "macros" :depends-on ("hdf5f"
-                                            "hdf5s"
-                                            "hdf5d"
-                                            "hdf5t"))))
+               
+               (:module "properties"
+                :depends-on ("hdf5")
+                :components ((:file "properties")
+                             (:file "constants" :depends-on ("properties"))))
+               
+               (:module "files"
+                :depends-on ("properties")
+                :components ((:file "files")))
+               
+               (:module "dataspaces"
+                :depends-on ("properties")
+                :components ((:file "dataspaces")))
+               
+               (:module "datatypes"
+                :depends-on ("properties")
+                :components ((:file "datatypes")))
+               
+               (:module "datasets"
+                :depends-on ("properties"
+                             "dataspaces"
+                             "datatypes"
+                             "files")
+                :components ((:file "datasets")))
+               
+               (:file "macros" :depends-on ("properties"
+                                            "files"
+                                            "dataspaces"
+                                            "datatypes"
+                                            "datasets"))))

@@ -2,9 +2,6 @@
   (:use #:cl
         #:hdf5)
   (:export
-   ;; Generic
-   #:hdf5-close
-
    ;; Macros
    #:with-hdf5
    #:with-open-hdf5-file
@@ -33,12 +30,32 @@
 
    ;; Types
    #:make-datatype
+
+   ;; Properties
+   #:create-property-list
    
    ;; Constants
    #:+unlimited+
    #:+default-properties+
    #:+hdf5-types+
-
+   #:+default-property-list+
+   #:+file-create+
+   #:+file-access+
+   #:+file-mount+
+   #:+object-create+
+   #:+object-copy+
+   #:+group-create+
+   #:+group-access+
+   #:+link-create+
+   #:+link-access+
+   #:+dataset-create+
+   #:+dataset-access+
+   #:+dataset-transfer+
+   #:+datatype-create+
+   #:+datatype-access+
+   #:+string-create+
+   #:+attribute-create+
+   
    ;; Errors
    #:hdf5-error   
    #:hdf5-invalid-id
